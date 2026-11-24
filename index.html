@@ -1,0 +1,589 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+    <application
+        android:allowBackup="true"
+        android:label="رفيق"
+        android:theme="@style/AppTheme"
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="false">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+
+        </activity>
+
+    </application>
+                </manifest>
+                  package com.rafiq.app;
+
+import android.app.*;
+import android.os.*;
+import android.graphics.Color;
+import android.view.*;
+import android.widget.*;
+import android.content.*;
+import android.content.pm.PackageManager;
+import android.Manifest;
+import android.text.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
+public class MainActivity extends Activity {
+
+    LinearLayout main, content;
+    TextView title;
+    int green = Color.rgb(28, 145, 105);
+    int dark = Color.rgb(25, 35, 45);
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        getWindow().setStatusBarColor(dark);
+        getWindow().setNavigationBarColor(dark);
+
+        showWelcome();
+
+        new Handler().postDelayed(() -> {
+            showHome();
+            requestNotificationPermission();
+        }, 2200);
+    }
+
+    void showWelcome() {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(1);
+        layout.setGravity(Gravity.CENTER);
+        layout.setBackgroundColor(dark);
+
+        TextView welcome = new TextView(this);
+        welcome.setText("صَلِّ عَلَى مُحَمَّد ﷺ");
+        welcome.setTextColor(Color.WHITE);
+        welcome.setTextSize(29);
+        welcome.setGravity(Gravity.CENTER);
+        welcome.setTypeface(null, 1);
+
+        layout.addView(welcome);
+        setContentView(layout);
+    }
+
+    void showHome() {
+        main = new LinearLayout(this);
+        main.setOrientation(1);
+        main.setPadding(20, 20, 20, 15);
+        main.setBackgroundColor(Color.rgb(245, 248, 246));
+
+        ScrollView scroll = new ScrollView(this);
+        LinearLayout page = new LinearLayout(this);
+        page.setOrientation(1);
+
+        TextView header = new TextView(this);
+        header.setText("رفيق");
+        header.setTextSize(30);
+        header.setTextColor(green);
+        header.setGravity(Gravity.CENTER);
+        header.setTypeface(null, 1);
+        page.addView(header);
+
+        TextView date = new TextView(this);
+        date.setText(new SimpleDateFormat(
+            "EEEE، dd MMMM yyyy",
+            new Locale("ar")
+        ).format(new Date()));
+        date.setTextSize(15);
+        date.setTextColor(dark);
+        date.setGravity(Gravity.CENTER);
+        date.setPadding(0, 10, 0, 20);
+        page.addView(date);
+
+        TextView greeting = new TextView(this);
+        greeting.setText("أهلاً بك في رفيقك اليومي ❤️\nنساعدك تنظم يومك وتحقق أهدافك");
+        greeting.setTextSize(17);
+        greeting.setTextColor(dark);
+        greeting.setGravity(Gravity.CENTER);
+        greeting.setPadding(10, 20, 10, 25);
+        page.addView(greeting);
+
+        addButton(page, "📚 الدراسة والمذاكرة", () -> study());
+        addButton(page, "🕌 العبادة والأذكار", () -> worship());
+        addButton(page, "📝 المهام اليومية", () -> tasks());
+        addButton(page, "💰 المصروفات", () -> money());
+        addButton(page, "🔢 السبحة الإلكترونية", () -> tasbeeh());
+        addButton(page, "⚙️ الإعدادات", () -> settings());
+
+        TextView footer = new TextView(this);
+        footer.setText("\nرفيق ❤️ رفيقك نحو حياة أفضل");
+        footer.setTextColor(green);
+        footer.setGravity(Gravity.CENTER);
+        footer.setTextSize(14);
+        page.addView(footer);
+
+        scroll.addView(page);
+        main.addView(scroll);
+        setContentView(main);
+    }
+
+    void addButton(LinearLayout parent, String text, Runnable action) {
+        Button button = new Button(this);
+        button.setText(text);
+        button.setTextSize(16);
+        button.setTextColor(Color.WHITE);
+        button.setBackgroundTintList(
+            android.content.res.ColorStateList.valueOf(green)
+        );
+        LinearLayout.LayoutParams params =
+            new LinearLayout.LayoutParams(-1, -2);
+        params.setMargins(0, 7, 0, 7);
+        parent.addView(button, params);
+        button.setOnClickListener(v -> action.run());
+    }
+
+    void openPage(String name) {
+        main.removeAllViews();
+
+        TextView back = new TextView(this);
+        back.setText("← الرئيسية");
+        back.setTextSize(17);
+        back.setTextColor(green);
+        back.setPadding(5, 10, 5, 20);
+        back.setOnClickListener(v -> showHome());
+        main.addView(back);
+
+        title = new TextView(this);
+        title.setText(name);
+        title.setTextSize(25);
+        title.setTextColor(green);
+        title.setGravity(Gravity.CENTER);
+        title.setPadding(0, 15, 0, 25);
+        main.addView(title);
+
+        content = new LinearLayout(this);
+        content.setOrientation(1);
+        main.addView(content);
+    }
+
+    void study() {
+        openPage("📚 الدراسة والمذاكرة");
+
+        EditText input = new EditText(this);
+        input.setHint("اكتب اسم المادة أو المهمة");
+        content.addView(input);
+
+        addButton(content, "حفظ المهمة", () -> {
+            saveItem("study", input.getText().toString());
+            input.setText("");
+            Toast.makeText(this, "تم الحفظ", Toast.LENGTH_SHORT).show();
+        });
+
+        showSaved("study");
+    }
+
+    void worship() {
+        openPage("🕌 العبادة والأذكار");
+
+        String[] items = {
+            "سبحان الله",
+            "الحمد لله",
+            "الله أكبر",
+            "لا إله إلا الله",
+            "أستغفر الله"
+        };
+
+        for (String item : items) {
+            addButton(content, item, () -> {
+                Toast.makeText(this, item, Toast.LENGTH_SHORT).show();
+            });
+        }
+    }
+
+    void tasks() {
+        openPage("📝 المهام اليومية");
+
+        EditText input = new EditText(this);
+        input.setHint("اكتب مهمتك الجديدة");
+        content.addView(input);
+
+        addButton(content, "إضافة المهمة", () -> {
+            saveItem("tasks", input.getText().toString());
+            input.setText("");
+            Toast.makeText(this, "تمت إضافة المهمة", Toast.LENGTH_SHORT).show();
+        });
+
+        showSaved("tasks");
+    }
+
+    void money() {
+        openPage("💰 المصروفات");
+
+        EditText input = new EditText(this);
+        input.setHint("المبلغ بالجنيه");
+        input.setInputType(2);
+        content.addView(input);
+
+        addButton(content, "حفظ المصروف", () -> {
+            String value = input.getText().toString();
+            if (value.isEmpty()) return;
+
+            saveItem("money", value + " جنيه");
+            input.setText("");
+            Toast.makeText(this, "تم تسجيل المصروف", Toast.LENGTH_SHORT).show();
+        });
+
+        showSaved("money");
+    }
+
+    int count = 0;
+
+    void tasbeeh() {
+        openPage("🔢 السبحة الإلكترونية");
+
+        TextView number = new TextView(this);
+        number.setTextSize(45);
+        number.setTextColor(green);
+        number.setGravity(Gravity.CENTER);
+        number.setText("0");
+        content.addView(number);
+
+        addButton(content, "سبحان الله", () -> {
+            count++;
+            number.setText(String.valueOf(count));
+        });
+
+        addButton(content, "إعادة التصفير", () -> {
+            count = 0;
+            number.setText("0");
+        });
+    }
+
+    void settings() {
+        openPage("⚙️ الإعدادات");
+
+        addButton(content, "عن تطبيق رفيق", () -> {
+            new AlertDialog.Builder(this)
+                .setTitle("رفيق")
+                .setMessage("رفيقك لتنظيم الدراسة والعبادة والحياة اليومية.")
+                .setPositiveButton("حسناً", null)
+                .show();
+        });
+
+        addButton(content, "حقوق التطبيق", () -> {
+            new AlertDialog.Builder(this)
+                .setTitle("حقوق التطبيق")
+                .setMessage("تم تطوير رفيق بواسطة ميدو ❤️")
+                .setPositiveButton("حسناً", null)
+                .show();
+        });
+    }
+
+    void saveItem(String key, String value) {
+        if (value.trim().isEmpty()) return;
+
+        android.content.SharedPreferences prefs =
+            getSharedPreferences("rafiq_data", MODE_PRIVATE);
+
+        String old = prefs.getString(key, "");
+        String updated = old.isEmpty() ? value : old + "\n" + value;
+
+        prefs.edit().putString(key, updated).apply();
+    }
+
+    void showSaved(String key) {
+        android.content.SharedPreferences prefs =
+            getSharedPreferences("rafiq_data", MODE_PRIVATE);
+
+        String saved = prefs.getString(key, "");
+
+        TextView list = new TextView(this);
+        list.setText(saved.isEmpty() ? "لا توجد بيانات محفوظة حتى الآن" : saved);
+        list.setTextColor(dark);
+        list.setTextSize(16);
+        list.setPadding(5, 20, 5, 10);
+
+        content.addView(list);
+    }
+
+    void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(
+                    new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                    100
+                );
+            }
+        }
+    }
+}
+     <?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F8F6"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:gravity="center_horizontal">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="رفيق"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="#1C9169"
+            android:gravity="center"
+            android:padding="15dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="رفيقك نحو حياة أفضل ❤️"
+            android:textSize="17sp"
+            android:textColor="#19232D"
+            android:gravity="center"
+            android:padding="10dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="نظم يومك، وحقق أهدافك، وابدأ من جديد"
+            android:textSize="14sp"
+            android:textColor="#60746A"
+            android:gravity="center"
+            android:padding="10dp"/>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="📚 الدراسة والمذاكرة"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#1C9169"/>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="🕌 العبادة والأذكار"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#1C9169"/>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="📝 المهام اليومية"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#1C9169"/>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="💰 المصروفات"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#1C9169"/>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="🔢 السبحة الإلكترونية"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#1C9169"/>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="⚙️ الإعدادات"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#1C9169"/>
+
+    </LinearLayout>
+
+          </ScrollView>         
+          <?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">رفيق</string>
+
+    <string name="welcome">صَلِّ عَلَى مُحَمَّد ﷺ</string>
+
+    <string name="app_title">رفيق</string>
+
+    <string name="app_description">
+        رفيقك نحو حياة أفضل
+    </string>
+
+    <string name="study">الدراسة والمذاكرة</string>
+
+    <string name="worship">العبادة والأذكار</string>
+
+    <string name="tasks">المهام اليومية</string>
+
+    <string name="money">المصروفات</string>
+
+    <string name="tasbeeh">السبحة الإلكترونية</string>
+
+    <string name="settings">الإعدادات</string>
+
+    <string name="about">عن التطبيق</string>
+
+    <string name="developer">تم تطوير التطبيق بواسطة ميدو</string>
+
+    <string name="notification_title">رفيق</string>
+
+    <string name="notification_text">
+        لا تنسَ أهدافك اليوم، ابدأ الآن ❤️
+    </string>
+
+      </resources>
+      <?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="primary">#1C9169</color>
+    <color name="primary_dark">#19232D</color>
+    <color name="accent">#D4AF37</color>
+
+    <color name="background">#F5F8F6</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+
+    <color name="text_primary">#19232D</color>
+    <color name="text_secondary">#60746A</color>
+
+    <color name="card_background">#FFFFFF</color>
+    <color name="border">#E2EAE5</color>
+
+    <color name="success">#2EAD72</color>
+    <color name="warning">#F0A52B</color>
+    <color name="danger">#DC4545</color>
+
+</resources>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#1C9169</item>
+        <item name="android:statusBarColor">#19232D</item>
+        <item name="android:navigationBarColor">#19232D</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowBackground">#F5F8F6</item>
+
+    </style>
+
+</resources>
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.rafiq.app'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.rafiq.app'
+        minSdk 23
+        targetSdk 35
+        versionCode 1
+        versionName '1.0'
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile(
+                'proguard-android-optimize.txt'
+            ), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}
+          pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "Rafiq"
+include ':app'
+         plugins {
+    id 'com.android.application' version '8.7.3' apply false
+} # 🌿 رفيق | RAFIQ
+
+رفيقك اليومي لتنظيم حياتك وتحقيق أهدافك.
+
+## 📱 عن التطبيق
+
+رفيق هو تطبيق Android عربي يساعدك على تنظيم يومك
+والاهتمام بدراستك وعبادتك ومهامك اليومية.
+
+## ⭐ المميزات
+
+- 📚 تنظيم الدراسة والمذاكرة.
+- 🕌 الأذكار والعبادات.
+- 📝 تسجيل المهام اليومية.
+- 💰 متابعة المصروفات.
+- 🔢 السبحة الإلكترونية.
+- ⚙️ إعدادات التطبيق.
+- 💾 حفظ البيانات على الهاتف.
+- 🌐 العمل دون الحاجة إلى الإنترنت في الوظائف المحلية.
+
+## 🎨 التصميم
+
+- اللغة: العربية.
+- اتجاه الواجهة: RTL.
+- اللون الأساسي: الأخضر.
+- اللون الثانوي: الذهبي.
+- النظام: Android.
+
+## 🛠️ التقنيات
+
+- Java
+- XML
+- Android SDK
+- Gradle
+
+## 👨‍💻 المطور
+
+ميدو ❤️
+
+## 📌 الإصدار
+
+Version 1.0
+
+## ❤️ رسالتنا
+
+رفيق ليس مجرد تطبيق،
+بل خطوة صغيرة نحو يوم أفضل وحياة أكثر تنظيماً.
+          
